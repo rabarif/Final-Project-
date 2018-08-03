@@ -1,0 +1,84 @@
+---
+title: "KNN CV"
+output: html_document
+---
+
+#KNN Cross Validation 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#load dataset
+```{r}
+TCC <- read.csv(file = "C:/users/arifr/Downloads/TCC.csv", header=TRUE)
+str(TCC)
+```
+#Clean dataset
+```{r}
+library(FSelectorRcpp)
+TCC$default <- as.factor(TCC$default)
+cols <-c(2:4, 6:11)
+TCC[cols] <-lapply(TCC[cols], factor)
+str(TCC)
+Entropy <- information_gain(default~., data = TCC)
+attributes <- Entropy[order(Entropy$importance),]
+#New_dataset
+new_dataset <- TCC[c(12:20,24)]
+str(new_dataset)
+```
+#Split dataset
+```{r}
+set.seed(187)
+library(caret)
+ind <- createDataPartition(y = new_dataset$default,p = 0.70,list = FALSE)
+training <- new_dataset[ind,]
+testing <- new_dataset[-ind,]
+```
+#Model KNN
+```{r}
+library(pROC)
+set.seed(123)
+#Control
+ctrl <- trainControl(method="cv", number = 3) 
+
+#Model 
+knn_model <- train(default ~ ., data = training, method = "knn", trControl = ctrl, tuneLength = 20)
+
+
+#Plot
+plot(knn_model, print.thres= 0.5, type="S")
+```
+#Results 
+```{r}
+knn_pred <- predict(knn_model, newdata = testing)
+confusionMatrix(knn_pred, testing$default)
+
+```
+#ROC
+```{r}
+library(pROC)
+library(ROCR)
+Predict_Probs <- predict(knn_model, newdata = testing, type = "prob")
+
+auc <- auc(testing$default, Predict_Probs[,2])
+
+plot(roc(testing$default, Predict_Probs[,2]))
+
+
+perf <- prediction(Predict_Probs[,2], testing$default)
+
+auc <- performance(perf, "auc")
+
+pred <- performance(perf, "tpr", "fpr")
+
+plot(pred, main = "KNN", col = 2, lwd = 2)
+abline(a=0, b=1, lwd=2, lty=2, col="blue")
+```
+#AUC
+```{r}
+auc <- auc@y.values[[1]]
+auc
+```
+
+```{r}
+
+```

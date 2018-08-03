@@ -1,0 +1,74 @@
+---
+title: "Logistic Regression CV"
+output: html_document
+---
+
+#Logistic Regression CV
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+TCC <- read.csv(file = "C:/users/arifr/Downloads/TCC.csv", header=TRUE)
+str(TCC)
+```
+
+```{r}
+#change (y) to as.factor
+TCC$default <- as.factor(TCC$default)
+#change (x) variables to factors 
+cols <-c(2:4, 6:11)
+TCC[cols] <-lapply(TCC[cols], factor)
+str(TCC)
+summary(TCC)
+```
+
+```{r}
+#Calculate entropy 
+Entropy <- information_gain(default~., data = TCC)
+#Sort entropy distribution in order
+attributes <- Entropy[order(Entropy$importance),]
+#Keep 9 (X) variables with highest entropy -> reducing 24 variables to 10 in newdataset 
+new_dataset <- TCC[c(12:20,24)]
+```
+
+```{r}
+set.seed(150)
+library(caret)
+ind <- createDataPartition(y = new_dataset$default,p = 0.70,list = FALSE)
+training <- new_dataset[ind,]
+testing <- new_dataset[-ind,]
+```
+
+```{r}
+library(pROC)
+set.seed(123)
+#Control
+ctrl <- trainControl(method="cv", number = 6)
+
+LR_model <- train(default ~ ., data = training, method = "glm", family = "binomial",trControl = ctrl)
+summary(LR_model)
+sort(varImp(LR_model))
+```
+
+```{r}
+LR_pred <- predict(LR_model, newdata = testing)
+confusionMatrix(LR_pred, testing$default, mode = "prec_recall")
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+

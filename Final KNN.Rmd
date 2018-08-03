@@ -1,0 +1,78 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#Load dataset
+```{r}
+TCC <- read.csv(file = "C:/users/arifr/Downloads/TCC.csv", header=TRUE)
+str(TCC)
+```
+#Clean dataset
+```{r}
+library(FSelectorRcpp)
+TCC$default <- as.factor(TCC$default)
+cols <-c(2:4, 6:11)
+TCC[cols] <-lapply(TCC[cols], factor)
+str(TCC)
+Entropy <- information_gain(default~., data = TCC)
+attributes <- Entropy[order(Entropy$importance),]
+#New_dataset
+new_dataset <- TCC[c(12:20,24)]
+str(new_dataset)
+```
+#Split dataset
+```{r}
+set.seed(123)
+split_data <- sample(2, nrow(new_dataset),
+                    replace = TRUE,
+                    prob = c(0.7, 0.3))
+```
+#Create train/test with (x) variables 
+```{r}
+train <- new_dataset[split_data == 1, 1:9]
+test <- new_dataset[split_data == 2, 1:9]
+```
+#Outcome label with (Y) variable 
+```{r}
+train_labels <- new_dataset[split_data == 1, 10]
+test_labels <- new_dataset[split_data == 2, 10]
+```
+#KNN
+```{r}
+library(class)
+K_pred <- knn(train = train,
+                test = test,
+                cl = train_labels,
+                k = 41,
+              prob= TRUE)
+
+```
+#Results
+```{r}
+library(caret)
+confusionMatrix(K_pred, test_labels, mode = "prec_recall")
+```
+
+```{r}
+results <- confusionMatrix(K_pred, test_labels)
+precision <- results$byClass['Pos Pred Value']
+recall <- results$byClass['Sensitivity']
+f_measure <- 2 * ((precision * recall) / (precision + recall))
+```
+
+```{r}
+library(pROC)
+attributes(K_pred)$prob
+roc(test_labels, attributes(K_pred)$prob)
+#AUC 0.63
+
+#Plot
+plot(roc(test_labels, attributes(K_pred)$prob), print.thres = TRUE, print.auc = TRUE, main= "KNN")
+
+
+```
+

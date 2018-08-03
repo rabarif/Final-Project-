@@ -1,0 +1,100 @@
+---
+title: "Random Forest"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Random Forest 
+```{r}
+#load dataset
+TCC <- read.csv(file = "C:/users/arifr/Downloads/TCC.csv", header=TRUE)
+str(TCC)
+```
+#Data cleaning 
+```{r}
+#change (Y) dependent variable to factor
+TCC$default <- as.factor(TCC$default)
+#chage (X) variables to factor
+cols <-c(2:4, 6:11)
+TCC[cols] <-lapply(TCC[cols], factor)
+str(TCC)
+summary(TCC)
+```
+#Entropy 
+```{r}
+#Calculate Entropy to reduce # of attributes 
+Entropy <- information_gain(default~., data = TCC)
+#sort entropy in order
+attributes <- Entropy[order(Entropy$importance),]
+#Keep 9 (X) variables with highest entropy -> reducing 24 variables to 10 in newdataset
+new_dataset <- TCC[c(12:20,24)]
+```
+#Create Train and Testing dataset
+#we train 70% (21040) and test 30% (8960)  
+#target variable default used in Y 
+```{r}
+set.seed(123)
+split_data <- sample(2, nrow(new_dataset), replace = TRUE, prob = c(0.7, 0.3))
+train_TCC <- new_dataset[split_data==1,]
+test_TCC <- new_dataset[split_data==2,]
+```
+
+#Random Forest using training data
+#mtry # of variables selected at each split 
+#OOB (out of bag rate = misclassification rate)
+#Each decision tree is tested on 1/3 of number of observations and not used in building tree
+```{r}
+library(randomForest)
+rf_model <-randomForest(default ~ ., data = train_TCC,
+                        ntree=500, importance=TRUE)
+rf_model
+#OOB erroe rate: 21.83%
+```
+#Evaluate the model 
+#higher the value of mean decrease accuracy or mean gini score, higher the importance of the variable. Bill_AMT1 is the most important.
+#Mean Decrease Accuracy - how much the model accuracy decreases if we drop the variable. 
+#Mean Decrease Gini - measure of variable importance based on the Gini impurity index used for the calculation of split in trees. 
+```{r}
+importance(rf_model)
+varImpPlot(rf_model)
+```
+#Predictions using Testing dataset
+```{r}
+
+predict_Class <- predict(rf_model, test_TCC, type = "class")
+t <- table(predictions=predict_Class, actual=test_TCC$default)
+confusionMatrix(t, mode = "prec_recall") 
+#Accuracy of 0.78 or 78% 
+sum(diag(t))/sum(t)
+```
+
+#ROC AND AUC
+```{r}
+library(pROC)
+library(ROCR)
+Predict_Probs <- predict(rf_model, test_TCC, type = "prob")
+
+auc <- auc(test_TCC$default, Predict_Probs[,2])
+
+plot(roc(test_TCC$default, Predict_Probs[,2]))
+
+
+perf = prediction(Predict_Probs[,2], test_TCC$default)
+
+auc = performance(perf, "auc")
+
+pred1 = performance(perf, "tpr", "fpr")
+
+plot(pred1, main = "ROC Random Forest", col = 2, lwd = 2)
+abline(a=0, b=1, lwd=2, lty=2, col="gray")
+```
+#Results
+```{r}
+#Test Results shows: 
+#Accuracy = 0.79 P= 0.81 R=0.95 F1=0.87
+ 
+```
+

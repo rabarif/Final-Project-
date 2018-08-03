@@ -1,0 +1,28 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+tab<-read.delim(text="
+K 3 6 9
+RF .88 .87 .88
+KNN .87 .86 .89
+LG .88 .88 .88
+",as.is=TRUE,sep=" ",row.names=1)
+
+tab<-t(tab)
+
+plot(tab[,1],type="b",ylim=c(.84,.90),col="red",lty=1,ylab="F1",lwd=2,xlab="K Fold",xaxt="n")
+lines(tab[,2],type="b",col="black",lty=2,lwd=2)
+lines(tab[,3],type="b",col="blue",lty=3,lwd=3)
+grid()
+legend("bottomright",legend=colnames(tab),lty=c(1,2,3),col=c("red","black","blue"),bg="white",lwd=2)
+axis(1,at=c(1:nrow(tab)),labels=rownames(tab))
+```
+
