@@ -1,0 +1,71 @@
+---
+title: "PCA TCC"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#Original dataset
+```{r}
+TCC <- read.csv(file = "C:/users/arifr/Downloads/TCC.csv", header = T, stringsAsFactors = T)
+str(TCC)
+summary(TCC)
+```
+#Create (x) attributes remove (Y) default 
+```{r}
+tcc_x <-TCC[,1:23]
+tcc.pca.rawdata <-prcomp(tcc_x, scale = FALSE, center= FALSE)
+tcc.pca.rawdata
+```
+#Transform the dataset using calculated PCAs
+```{r}
+tcc.pca.rawdata$rotation      # eigen vector / rotation matrix / tranformation matrix
+head(tcc.pca.rawdata$x)       # Transformed data
+```
+#Plot without normalization
+```{r}
+plot(tcc.pca.rawdata, type = "l", main='without data normalization')
+```
+#Plot with normalization 
+```{r}
+tcc.pca.normdata <- prcomp(tcc_x, scale = TRUE, center= TRUE)
+tcc.pca.normdata$rotation      # eigen vector / rotation matrix / tranformation matrix
+head(tcc.pca.normdata$x)       # Transformed data
+plot(tcc.pca.normdata, type = "l", main='with data normalization')
+```
+#Boxplot 
+```{r}
+boxplot(tcc.pca.rawdata$x, main='Raw Data Transformation')
+boxplot(tcc.pca.normdata$x, main='Norm Data Transformation')
+boxplot(TCC, main='Original Data')
+```
+#Correlation of (x) variables 
+```{r}
+cor(tcc_x)
+```
+
+```{r}
+cor(tcc.pca.rawdata$x)
+```
+
+```{r}
+cor(tcc.pca.normdata$x)
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
